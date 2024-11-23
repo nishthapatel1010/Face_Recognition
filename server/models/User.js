@@ -1,63 +1,13 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
+const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
-  name: {
-    type: String,
-    required: true,
-  },
-  phone: {
-    type: String,
-    required: function () {
-      return this.role === "user";
-    },
-    match: /^[0-9]{10}$/,
-    unique: true,
-  },
-  dateOfJoining: {
-    type: Date,
-    required: function () {
-      return this.role === "user";
-    },
-  },
-  age: {
-    type: Number,
-    required: function () {
-      return this.role === "user";
-    },
-    min: 1,
-  },
-  gender: {
-    type: String,
-    required: function () {
-      return this.role === "user";
-    },
-  },
-  role: { type: String, required: true, enum: ["user", "admin"] },
+  username: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  gender: { type: String, required: true, enum: ['Male', 'Female', 'Other'] }, // Ensures only specific values
+  age: { type: Number, required: true, min: 0 }, // Age must be non-negative
+  phone: { type: String, required: true, match: /^\d{10}$/ }, // Validates 10-digit phone number
+  dateOfJoining: { type: Date, required: true }, // Date must be provided
 });
 
-// Hash password before saving the user model
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (err) {
-    next(err);
-  }
-});
-
-const User = mongoose.model("User", userSchema);
-
-module.exports = User;
+module.exports = mongoose.model('User', userSchema);

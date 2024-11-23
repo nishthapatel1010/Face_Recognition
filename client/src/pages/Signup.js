@@ -1,231 +1,134 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { Form, Input, Button, message, Select, DatePicker } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Select, Typography, message as antdMessage, Card, Radio } from 'antd';
+import axios from '../utils/axios';
 
-const { Title, Text } = Typography;
+const { Option } = Select;
 
 const Signup = () => {
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        age: '',
-        gender: '',
-        dateOfJoining: '',
-        password: '',
-        confirmPassword: '',  // Add confirmPassword to the state
-        secretKey: '',
-        role: 'user',
-    });
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-    const [error, setError] = useState(null);
-    const navigate = useNavigate();
+  const onFinish = async (values) => {
+    setLoading(true);
+    try {
+      // Use the custom Axios instance for the API request
+      const { data } = await axios.post('/auth/signup', values);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prevData) => ({
-            ...prevData,
-            [name]: value,
-        }));
-    };
+      // Save token and user data in localStorage
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
 
-    const handleRoleChange = (e) => {
-        setFormData((prevData) => ({
-            ...prevData,
-            role: e.target.value,
-            ...(e.target.value === 'user' && { secretKey: '' }),
-        }));
-    };
+      message.success('Signup successful!');
+      navigate('/signin'); // Navigate to Signin page
+    } catch (error) {
+      message.error(error.response?.data?.message || 'Something went wrong!');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handleSubmit = async () => {
-        setError(null);
+  return (
+    <div
+      style={{
+        maxWidth: '600px',
+        margin: '50px auto',
+        padding: '40px',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+        borderRadius: '8px',
+        background: '#fff',
+      }}
+    >
+      <h2 style={{ textAlign: 'center', marginBottom: '20px', fontWeight: 'bold', fontSize: '24px' }}>
+        Create an Account
+      </h2>
+      <Form
+        layout="vertical"
+        onFinish={onFinish}
+        initialValues={{ username: '', email: '', gender: 'Male', age: '', phone: '', password: '' }}
+      >
+        <Form.Item
+          label="Username"
+          name="username"
+          rules={[{ required: true, message: 'Please enter your username!' }]}
+        >
+          <Input placeholder="Enter your username" />
+        </Form.Item>
 
-        // Validation checks
-        if (!formData.name) return setError("Name is required.");
-        if (!formData.email) return setError("Email is required.");
-        const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        if (!emailPattern.test(formData.email)) return setError("Please enter a valid email address.");
+        <Form.Item
+          label="Email"
+          name="email"
+          rules={[
+            { required: true, message: 'Please enter your email!' },
+            { type: 'email', message: 'Please enter a valid email!' },
+          ]}
+        >
+          <Input placeholder="Enter your email" />
+        </Form.Item>
 
-        if (formData.role === 'user') {
-            if (!formData.phone) return setError("Phone number is required.");
-            const phonePattern = /^[0-9]{10}$/;
-            if (!phonePattern.test(formData.phone)) return setError("Please enter a valid phone number (10 digits).");
+        <Form.Item
+          label="Gender"
+          name="gender"
+          rules={[{ required: true, message: 'Please select your gender!' }]}
+        >
+          <Select placeholder="Select your gender">
+            <Option value="Male">Male</Option>
+            <Option value="Female">Female</Option>
+            <Option value="Other">Other</Option>
+          </Select>
+        </Form.Item>
 
-            if (!formData.age) return setError("Age is required.");
-            if (isNaN(formData.age) || formData.age <= 0) return setError("Please enter a valid age.");
+        <Form.Item
+          label="Age"
+          name="age"
+          rules={[
+            { required: true, message: 'Please enter your age!' },
+          ]}
+        >
+          <Input type="number" placeholder="Enter your age" />
+        </Form.Item>
 
-            if (!formData.gender) return setError("Gender is required.");
-            if (!formData.dateOfJoining) return setError("Date of Joining is required.");
-        } else if (formData.role === 'admin') {
-            if (!formData.secretKey) return setError("Secret key is required for Admin.");
-            if (formData.secretKey !== "PQ30$11") {
-                return setError("Invalid Admin.");
-            }
-        }
+        <Form.Item
+          label="Phone Number"
+          name="phone"
+          rules={[
+            { required: true, message: 'Please enter your phone number!' },
+            { pattern: /^\d{10}$/, message: 'Phone number must be 10 digits!' },
+          ]}
+        >
+          <Input placeholder="Enter your phone number" />
+        </Form.Item>
 
-        if (!formData.password) return setError("Password is required.");
-        if (formData.password !== formData.confirmPassword) return setError("Passwords do not match."); // Add this check
+        <Form.Item
+          label="Date of Joining"
+          name="dateOfJoining"
+          rules={[{ required: true, message: 'Please select your date of joining!' }]}
+        >
+          <DatePicker style={{ width: '100%' }} />
+        </Form.Item>
 
-        const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-        if (!passwordPattern.test(formData.password)) {
-            return setError("Password must be at least 8 characters long, include a number and a special character.");
-        }
+        <Form.Item
+          label="Password"
+          name="password"
+          rules={[{ required: true, message: 'Please enter your password!' }]}
+        >
+          <Input.Password placeholder="Enter your password" />
+        </Form.Item>
 
-        try {
-            const response = await axios.post('http://localhost:5000/api/auth/signup', formData, {
-                headers: { 'Content-Type': 'application/json' },
-            });
-            antdMessage.success(response.data.message);
-
-            // Navigate based on role
-            if (formData.role === 'user') {
-                navigate('/signin'); // Redirect to /signin page
-            } else if (formData.role === 'admin') {
-                navigate('/signin'); // Redirect to /signin page for admin
-            }
-        } catch (err) {
-            setError(err.response?.data.message || "Signup failed. Please try again.");
-        }
-    };
-
-    return (
-        <div style={{ maxWidth: 450, margin: '0 auto', padding: '2rem' }}>
-            <Card
-                style={{
-                    borderRadius: '10px',
-                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                    padding: '20px',
-                }}
-            >
-                <Title level={2} style={{ textAlign: 'center', color: '#333' }}>Signup</Title>
-
-                <Form
-                    layout="vertical"
-                    onFinish={handleSubmit}
-                    style={{ maxWidth: 400, margin: '0 auto' }}
-                >
-                    <Form.Item label="Role" required>
-                        <Radio.Group onChange={handleRoleChange} value={formData.role}>
-                            <Radio value="user">User</Radio>
-                            <Radio value="admin">Admin</Radio>
-                        </Radio.Group>
-                    </Form.Item>
-
-                    {formData.role === 'admin' && (
-                        <Form.Item label="Secret Key" required>
-                            <Input
-                                name="secretKey"
-                                value={formData.secretKey}
-                                onChange={handleChange}
-                                placeholder="Enter secret key"
-                                style={{
-                                    borderRadius: '5px',
-                                    border: '1px solid #ddd',
-                                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                                }}
-                            />
-                        </Form.Item>
-                    )}
-
-                    <Form.Item label="Name" required>
-                        <Input
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            placeholder="Enter your name"
-                        />
-                    </Form.Item>
-
-                    <Form.Item label="Email" required>
-                        <Input
-                            name="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            placeholder="Enter your email"
-                        />
-                    </Form.Item>
-
-                    {formData.role === 'user' && (
-                        <>
-                            <Form.Item label="Phone" required>
-                                <Input
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    placeholder="Enter your phone number"
-                                />
-                            </Form.Item>
-
-                            <Form.Item label="Age" required>
-                                <Input
-                                    name="age"
-                                    type="number"
-                                    value={formData.age}
-                                    onChange={handleChange}
-                                    placeholder="Enter your age"
-                                />
-                            </Form.Item>
-
-                            <Form.Item label="Gender" required>
-                                <Select
-                                    name="gender"
-                                    value={formData.gender}
-                                    onChange={(value) => setFormData({ ...formData, gender: value })}
-                                    placeholder="Select your gender"
-                                >
-                                    <Select.Option value="male">Male</Select.Option>
-                                    <Select.Option value="female">Female</Select.Option>
-                                    <Select.Option value="other">Other</Select.Option>
-                                </Select>
-                            </Form.Item>
-
-                            <Form.Item label="Date of Joining" required>
-                                <Input
-                                    name="dateOfJoining"
-                                    type="date"
-                                    value={formData.dateOfJoining}
-                                    onChange={handleChange}
-                                />
-                            </Form.Item>
-                        </>
-                    )}
-
-                    <Form.Item label="Password" required>
-                        <Input.Password
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            placeholder="Enter your password"
-                        />
-                    </Form.Item>
-
-                    {/* Add Confirm Password field */}
-                    <Form.Item label="Confirm Password" required>
-                        <Input.Password
-                            name="confirmPassword"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            placeholder="Confirm your password"
-                        />
-                    </Form.Item>
-
-                    <Form.Item>
-                        <Button
-                            type="primary"
-                            htmlType="submit"
-                            block
-                        >
-                            Sign Up
-                        </Button>
-                    </Form.Item>
-                </Form>
-
-                {error && <Text type="danger" style={{ textAlign: 'center', display: 'block' }}>{error}</Text>}
-            </Card>
-        </div>
-    );
+        <Form.Item>
+          <Button type="primary" htmlType="submit" block loading={loading}>
+            Signup
+          </Button>
+        </Form.Item>
+      </Form>
+      <p style={{ textAlign: 'center', marginTop: '10px' }}>
+        Already have an account?{' '}
+        <a onClick={() => navigate('/signin')} style={{ color: '#1890ff', cursor: 'pointer' }}>
+          Signin
+        </a>
+      </p>
+    </div>
+  );
 };
 
 export default Signup;

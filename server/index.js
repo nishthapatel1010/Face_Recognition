@@ -1,29 +1,31 @@
-// server.js
-const express = require('express');
+// backend/server.js
+const express = require("express");
+const dotenv = require("dotenv");
+const connectDB = require("./config/db");
+const authRoutes = require("./Routes/authRoutes");
+const uploadRoutes=require("./Routes/Upload.Route")
 const cors = require('cors');
-const dotenv = require('dotenv');
-const connectDB = require('./config/db');  // Import the DB connection function
-const signupRoutes = require('./Routes/User.Route');  // Import the signup route
-const uploadRoutes = require('./Routes/Upload.Route');  // Import the upload route
+// const signup=require('./')
+const app = express();  
 
-dotenv.config();  // Load environment variables
-
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-// Middleware
-app.use(cors());
-app.use(express.json()); // Parses incoming JSON requests
-app.use(express.urlencoded({ extended: true })); // Parses URL-encoded data
-
-// Connect to MongoDB
+dotenv.config();
 connectDB();
 
-// Use the signup and upload routes
-app.use('/api/auth', signupRoutes); // Adjust the path as needed
-app.use('/api/upload', uploadRoutes); // Adjust the path as needed
+app.use(cors({
+  origin: 'http://localhost:3000', // Allow requests from the frontend running on localhost:3000
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow these HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
+}));
+// Middleware
+app.use(express.json());
+// console.log("Signup function:", signup); // Should log the function definition
+// console.log("Signin function:", signin);
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/upload",uploadRoutes)
+// app.use("/api/users", userRoutes);
 
-// Start the server
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

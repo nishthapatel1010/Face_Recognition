@@ -1,60 +1,56 @@
-import React, { useState } from 'react';
-import { Form, Input, Button } from 'antd';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Form, Input, Button, message } from 'antd';
+import { useNavigate ,Link} from 'react-router-dom';
+import axios from '../utils/axios'; // Import the custom Axios instance
 
 const Signin = () => {
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (values) => {
+  const onFinish = async (values) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/signin', values);
-  
-      if (response.data.success) {
-        alert('Signin successful!');
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        navigate('/upload'); // Redirect to another page
-      } else {
-        alert(response.data.message); // Handle specific message
-      }
+      // Use the custom Axios instance for the API request
+      const { data } = await axios.post('/auth/signin', values);
+
+      // Save token and user data in localStorage
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      message.success('Signin successful!');
+      navigate('/upload'); // Navigate to Home page
     } catch (error) {
-      console.error('Signin error:', error.response?.data || error.message);
-      alert(error.response?.data?.message || 'An error occurred during signin.');
+      message.error(error.response?.data?.message || 'Invalid credentials!');
     }
   };
-  
 
   return (
-    <div style={{ maxWidth: '400px', margin: 'auto', marginTop: '100px' }}>
-      <h2>Sign In</h2>
-      <Form
-        name="signin-form"
-        onFinish={handleSubmit} // Pass handleSubmit as a reference
-        layout="vertical"
-      >
+    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
+      <h2 style={{ textAlign: 'center' }}>Signin</h2>
+      <Form layout="vertical" onFinish={onFinish}>
         <Form.Item
-          name="email"
           label="Email"
+          name="email"
           rules={[{ required: true, message: 'Please enter your email!' }]}
         >
-          <Input type="email" placeholder="Enter your email" />
+          <Input placeholder="Enter your email" />
         </Form.Item>
 
         <Form.Item
-          name="password"
           label="Password"
+          name="password"
           rules={[{ required: true, message: 'Please enter your password!' }]}
         >
           <Input.Password placeholder="Enter your password" />
         </Form.Item>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit" loading={loading} block>
-            Sign In
+          <Button type="primary" htmlType="submit" block>
+            Signin
           </Button>
         </Form.Item>
       </Form>
+      <p style={{ textAlign: 'center' }}>
+        Don’t have an account? <Link  to="/signup">Signup</Link>
+      </p>
     </div>
   );
 };

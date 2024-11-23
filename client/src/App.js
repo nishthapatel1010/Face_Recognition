@@ -10,6 +10,7 @@ import Signup from './pages/Signup'
 import Picture from './pages/Picture'
 import SignIn from './pages/Signin';
 import Profile from './components/Profile';
+import PrivateRoute from './utils/PrivateRoute';
 // import Navbar from './components/Navbar';
 
 const App = () => {
@@ -20,7 +21,11 @@ const App = () => {
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/admin" element={<AdminDashboard />} />
-                    <Route path="/user" element={<UserDashboard />} />
+                    <Route path="/user" element={
+                        <PrivateRoute> 
+                        <UserDashboard /> 
+                        </PrivateRoute>
+                        } />
                     <Route path="/attendance" element={<Attendance />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/signin" element={<SignIn />} />

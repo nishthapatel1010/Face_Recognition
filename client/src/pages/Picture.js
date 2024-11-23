@@ -1,19 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const FileUploadForm = () => {
   const [image, setImage] = useState(null);
-  const [isSignedUp, setIsSignedUp] = useState(false); // State to check if the user has signed up
+  const [isSignedUp, setIsSignedUp] = useState(false); // State to check if the user is signed in
   const navigate = useNavigate();
 
-  // Check if the user is signed up
-  React.useEffect(() => {
-    // Replace this with your actual signup verification logic
-    const user = false; // Change this condition based on your logic
-    if (!user) {
-      alert("You are not registered. Please sign up first.");
-      navigate('/signup');
+  // Check if the user is signed in
+  useEffect(() => {
+    // Example after successful login
+// const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3M2Y4NDVhYzczOTI0ZGI3ZDc5NTQ2MyIsImlhdCI6MTczMjIxNjI2MiwiZXhwIjoxNzMyMjE5ODYyfQ.dz2hFNkcAWpIHmzJ4_cNTQ0BdPXh0jsnJ39WFkUZfpU'; // Replace with your actual token from the server
+// localStorage.setItem('authToken', token);
+const token = localStorage.getItem('token');
+console.log("Token stored:",token);
+
+    // Here, we assume that the user is considered signed in if a token exists in localStorage
+    // const token = localStorage.getItem('authToken');  // Replace with actual authentication check
+  //  console.log(token)
+    if (!token) {
+      alert("You are not signed in. Please sign in first.");
+      navigate('/signin');
     } else {
       setIsSignedUp(true);
     }
@@ -26,9 +33,8 @@ const FileUploadForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isSignedUp) {
-      alert("You are not registered. Please sign up first.");
-      navigate('/signup');
+    if (!image) {
+      alert("Please select an image to upload.");
       return;
     }
 
@@ -47,8 +53,8 @@ const FileUploadForm = () => {
       console.log(response.data);
       alert('Image uploaded successfully');
       
-      // Navigate to the sign-in page after successful upload
-      navigate('/signin'); // Replace '/signin' with your actual route for the sign-in page
+      // Navigate to a success page or any other page after successful upload
+      navigate('/user');  // Replace '/dashboard' with your actual route after upload
     } catch (error) {
       console.log('Error uploading file:', error);
       alert('Failed to upload the image. Please try again.');
@@ -68,11 +74,10 @@ const FileUploadForm = () => {
           <button type="submit">Upload</button>
         </form>
       ) : (
-        <p>Please sign up to upload a file.</p>
+        <p>Please sign in to upload a file.</p>
       )}
     </div>
   );
 };
 
 export default FileUploadForm;
-  

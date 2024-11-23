@@ -1,43 +1,49 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Layout, Menu, theme } from 'antd';
 import { AppstoreOutlined, PoweroffOutlined, UserOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate from react-router-dom
+import { useNavigate } from 'react-router-dom';
 
 const { Header, Content, Footer, Sider } = Layout;
 
-function getItem(label, key, icon, children) {
+function getItem(label, key, icon) {
   return {
     key,
     icon,
-    children,
     label,
   };
 }
 
 const items = [
-  getItem('Profile', '1', <UserOutlined />, '/view-profile'), // Define the paths for navigation
-  getItem('Summary', '2', <AppstoreOutlined />, '/summary'),
-  getItem('Logout', '3', <PoweroffOutlined />, '/logout'),
+  getItem('Profile', '1', <UserOutlined />),
+  getItem('Summary', '2', <AppstoreOutlined />),
+  getItem('Logout', '3', <PoweroffOutlined />),
 ];
 
 const UserDashboard = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
 
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
-  const onClickMenuItem = ({ key }) => {
-    if (key === '2') {
-      console.log('Logout clicked');
-      // Add your logout logic here
+  // Check login state on component mount
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem('token'); // Replace 'authToken' with your key for authentication
+    if (!isLoggedIn) {
+      navigate('/signin'); // Redirect to sign-in if not logged in
     }
-    // Use navigate to go to the path for each menu item
+  }, [navigate]);
+
+  const onClickMenuItem = ({ key }) => {
     if (key === '1') {
-      navigate('/view-profile'); // Navigate to Profile
+      navigate('/profile'); // Navigate to Profile
     } else if (key === '2') {
       navigate('/summary'); // Navigate to Summary
+    } else if (key === '3') {
+      console.log('Logout clicked');
+      localStorage.removeItem('token'); // Clear authentication token
+      navigate('/signin'); // Redirect to sign-in after logout
     }
   };
 
@@ -53,17 +59,16 @@ const UserDashboard = () => {
         onCollapse={(value) => setCollapsed(value)}
         width={200}
         style={{
-          background: '#001529', // Dark background for the sidebar
+          background: '#001529',
         }}
       >
         <Menu
           mode="inline"
           defaultSelectedKeys={['1']}
           onClick={onClickMenuItem}
-          theme="dark" // Use dark theme for the menu
+          theme="dark"
           inlineCollapsed={collapsed}
         >
-          {/* Dynamically generate Menu Items with links */}
           {items.map((item) => (
             <Menu.Item key={item.key} icon={item.icon}>
               {item.label}
@@ -105,8 +110,6 @@ const UserDashboard = () => {
               borderRadius: borderRadiusLG,
             }}
           >
-            {/* Content will change based on routing defined in App.js */}
-            {/* This part will not have the Routes component here */}
             <p>Select a menu item to navigate</p>
           </div>
         </Content>
